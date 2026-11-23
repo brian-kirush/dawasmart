@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f8f6">
+    <title>Purchases and suppliers | DawaSmart</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    >
+    <link href="./assets/css/app.css" rel="stylesheet">
+  </head>
+  <body data-active-page="purchases">
+    <div id="app">
+      <div class="dashboard-content">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Stock management</p>
+            <h1>Purchases and suppliers</h1>
+            <p class="text-secondary mb-0">
+              Review received purchases and the suppliers saved for your pharmacy.
+            </p>
+          </div>
+          <a class="btn btn-primary" href="./batches.html">Receive stock</a>
+        </div>
+
+        <div class="alert demo-banner" id="purchase-dataset-note" role="note" hidden>
+          <span class="demo-banner-dot" aria-hidden="true"></span>
+          <span>
+            <strong>Synthetic dataset.</strong> These purchase and supplier
+            records are for demonstration.
+          </span>
+        </div>
+
+        <div
+          class="alert alert-danger"
+          id="purchase-status"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></div>
+
+        <section class="summary-grid" aria-label="Purchases summary">
+          <article class="summary-card">
+            <p class="summary-label">Purchase records</p>
+            <p class="summary-value" id="purchase-count">—</p>
+            <p class="summary-foot">Latest records shown below</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Active suppliers</p>
+            <p class="summary-value" id="supplier-count">—</p>
+            <p class="summary-foot">Available when receiving stock</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Most recent purchase</p>
+            <p class="summary-value summary-value-compact" id="latest-purchase">
+              —
+            </p>
+            <p class="summary-foot">Purchase date</p>
+          </article>
+          <article class="summary-card">
+            <p class="summary-label">Total purchase value</p>
+            <p class="summary-value summary-value-compact" id="purchase-value">
+              —
+            </p>
+            <p class="summary-foot">Of purchases shown</p>
+          </article>
+        </section>
+
+        <section class="content-card mb-4" aria-labelledby="purchase-list-title">
+          <div class="card-heading medicine-list-heading">
+            <div>
+              <h2 id="purchase-list-title">Purchase history</h2>
+              <p>
+                Receiving a batch from Batches records a completed purchase.
+              </p>
+            </div>
+            <span class="status-chip status-chip-neutral" id="purchase-list-count">
+              Loading…
+            </span>
+          </div>
+          <div class="table-responsive medicine-table-wrap">
+            <table class="table align-middle medicine-table">
+              <thead>
+                <tr>
+                  <th scope="col">Purchase no.</th>
+                  <th scope="col">Date</th>
+                  <th scope="col">Supplier</th>
+                  <th scope="col">Medicine</th>
+                  <th scope="col">Received / ordered</th>
+                  <th scope="col">Unit cost</th>
+                  <th scope="col">Line total</th>
+                  <th scope="col">Status</th>
+                </tr>
+              </thead>
+              <tbody id="purchase-rows">
+                <tr><td colspan="8">Loading purchases…</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="small text-secondary mt-3 mb-0" id="purchase-list-note">
+            Showing the latest 100 purchase records.
+          </p>
+        </section>
+
+        <section class="content-card" aria-labelledby="supplier-list-title">
+          <div class="card-heading medicine-list-heading">
+            <div>
+              <h2 id="supplier-list-title">Supplier directory</h2>
+              <p>
+                Administrators set each supplier's delivery lead time. Reorder
+                recommendations need this value.
+              </p>
+            </div>
+            <a class="btn btn-outline-success btn-sm" href="./batches.html">
+              Receive stock
+            </a>
+          </div>
+          <div class="table-responsive medicine-table-wrap">
+            <table class="table align-middle medicine-table">
+              <thead>
+                <tr>
+                  <th scope="col">Supplier</th>
+                  <th scope="col">Contact</th>
+                  <th scope="col">Phone</th>
+                  <th scope="col">Email</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Lead time (days)</th>
+                  <th scope="col">Action</th>
+                </tr>
+              </thead>
+              <tbody id="supplier-rows">
+                <tr><td colspan="7">Loading suppliers…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="./assets/js/layout.js"></script>
+    <script type="module" src="./assets/js/purchases.js"></script>
+  </body>
+</html>

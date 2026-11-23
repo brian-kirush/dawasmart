@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f8f6">
+    <title>Medicines | DawaSmart</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    >
+    <link href="./assets/css/app.css" rel="stylesheet">
+  </head>
+  <body data-active-page="medicines">
+    <div id="app">
+      <div class="dashboard-content">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Inventory</p>
+            <h1>Medicines</h1>
+            <p class="text-secondary mb-0">
+              Manage the medicine catalogue used by your pharmacy.
+            </p>
+          </div>
+          <a
+            class="btn btn-primary"
+            href="./medicine-form.html"
+            data-admin-only
+            hidden
+          >
+            Add medicine
+          </a>
+        </div>
+
+        <div class="alert demo-banner" id="medicine-preview-note" role="note">
+          <span class="demo-banner-dot" aria-hidden="true"></span>
+          <span>
+            <strong>Static preview.</strong> The catalogue is not connected to
+            Supabase. Seed records are labelled synthetic in the database.
+          </span>
+        </div>
+
+        <div
+          class="alert alert-danger"
+          id="medicine-status"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></div>
+
+        <section class="content-card" aria-labelledby="medicine-list-title">
+          <div class="card-heading medicine-list-heading">
+            <div>
+              <h2 id="medicine-list-title">Medicine catalogue</h2>
+              <p>Medicine details and demand patterns for this pharmacy.</p>
+            </div>
+            <span class="status-chip status-chip-neutral" id="medicine-count">
+              Loading…
+            </span>
+          </div>
+
+          <div class="table-responsive medicine-table-wrap">
+            <table class="table align-middle medicine-table">
+              <thead>
+                <tr>
+                  <th scope="col">Medicine</th>
+                  <th scope="col">SKU</th>
+                  <th scope="col">Form</th>
+                  <th scope="col">Therapeutic class</th>
+                  <th scope="col">Demand pattern</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="medicine-rows">
+                <tr>
+                  <td colspan="6">
+                    <div class="table-empty-state">
+                      <span class="empty-state-mark" aria-hidden="true">M</span>
+                      <h3>No connected medicines</h3>
+                      <p>
+                        Connect the application to Supabase to view and manage
+                        this pharmacy’s catalogue.
+                      </p>
+                      <a
+                        class="btn btn-outline-success"
+                        href="./medicine-form.html"
+                        data-admin-only
+                        hidden
+                      >
+                        Add a medicine
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="./assets/js/layout.js"></script>
+    <script type="module" src="./assets/js/medicines.js"></script>
+  </body>
+</html>

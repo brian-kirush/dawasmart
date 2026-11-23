@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#f5f8f6">
+    <title>Audit log | DawaSmart</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    >
+    <link href="./assets/css/app.css" rel="stylesheet">
+  </head>
+  <body data-active-page="audit-log">
+    <div id="app">
+      <div class="dashboard-content">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Administration</p>
+            <h1>Audit log</h1>
+            <p class="text-secondary mb-0">
+              Review recorded changes made in this pharmacy.
+            </p>
+          </div>
+          <span class="status-chip status-chip-neutral" id="audit-count">Loading…</span>
+        </div>
+
+        <div
+          class="alert alert-danger"
+          id="audit-status"
+          role="status"
+          aria-live="polite"
+          hidden
+        ></div>
+
+        <section class="content-card mb-4" aria-label="Audit filters">
+          <form class="audit-filters" id="audit-filters">
+            <div>
+              <label class="form-label" for="audit-from">From</label>
+              <input class="form-control" id="audit-from" type="date">
+            </div>
+            <div>
+              <label class="form-label" for="audit-to">To</label>
+              <input class="form-control" id="audit-to" type="date">
+            </div>
+            <div>
+              <label class="form-label" for="audit-table">Record type</label>
+              <select class="form-select" id="audit-table">
+                <option value="">All record types</option>
+                <option value="pharmacies">Pharmacies</option>
+                <option value="profiles">Staff profiles</option>
+                <option value="medicines">Medicines</option>
+                <option value="suppliers">Suppliers</option>
+                <option value="purchases">Purchases</option>
+                <option value="purchase_items">Purchase items</option>
+                <option value="batches">Batches</option>
+                <option value="sales">Sales</option>
+                <option value="sale_items">Sale items</option>
+                <option value="sale_item_batches">Sale batch deductions</option>
+                <option value="stock_adjustments">Stock adjustments</option>
+                <option value="forecast_runs">Forecast runs</option>
+                <option value="forecast_results">Forecast results</option>
+                <option value="reorder_recommendations">Recommendations</option>
+                <option value="expiry_alerts">Expiry alerts</option>
+                <option value="assistant_logs">Assistant logs</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label" for="audit-operation">Action</label>
+              <select class="form-select" id="audit-operation">
+                <option value="">All actions</option>
+                <option value="INSERT">Created</option>
+                <option value="UPDATE">Updated</option>
+                <option value="DELETE">Deleted</option>
+              </select>
+            </div>
+            <button class="btn btn-primary" type="submit">Apply filters</button>
+          </form>
+        </section>
+
+        <section class="content-card" aria-labelledby="audit-list-title">
+          <div class="card-heading medicine-list-heading">
+            <div>
+              <h2 id="audit-list-title">Recorded activity</h2>
+              <p>
+                Showing up to 200 events. Event snapshots are not exposed in
+                this view.
+              </p>
+            </div>
+          </div>
+          <div class="table-responsive medicine-table-wrap">
+            <table class="table align-middle medicine-table">
+              <thead>
+                <tr>
+                  <th scope="col">When</th>
+                  <th scope="col">Staff member</th>
+                  <th scope="col">Action</th>
+                  <th scope="col">Record type</th>
+                  <th scope="col">Record ID</th>
+                </tr>
+              </thead>
+              <tbody id="audit-rows">
+                <tr><td colspan="5">Loading audit events…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+    <script type="module" src="./assets/js/layout.js"></script>
+    <script type="module" src="./assets/js/audit-log.js"></script>
+  </body>
+</html>

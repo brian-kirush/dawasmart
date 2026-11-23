@@ -1,0 +1,15 @@
+.env
+.env.*
+!.env.example
+.DS_Store
+node_modules/
+__pycache__/
+.pytest_cache/
+.venv/
+.venv-*/
+venv/
+*.py[cod]
+.ipynb_checkpoints/
+supabase/.temp/
+supabase/bootstrap_profiles.sql
+forecasting/artifacts/

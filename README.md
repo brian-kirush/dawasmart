@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # DawaSmart
 
 DawaSmart is a pharmacy inventory and demand-forecasting project for Kenyan

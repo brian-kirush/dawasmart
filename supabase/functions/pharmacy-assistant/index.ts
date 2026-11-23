@@ -2,6 +2,12 @@ import {
   createClient,
   type SupabaseClient,
 } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  type AssistantIntent,
+  extractMedicineQuestion,
+  intentFor,
+  type MedicineQuestion,
+} from "./domain.ts";
 
 declare const Deno: {
   env: { get(name: string): string | undefined };
@@ -62,37 +68,94 @@ async function verifyUser(
   };
 }
 
-function intentFor(
-  question: string,
-):
-  | "low_stock"
-  | "expiry"
-  | "recommendations"
-  | "sales"
-  | "forecast"
-  | "clinical"
-  | "general" {
-  const text = question.toLowerCase();
-  if (
-    /diagnos|symptom|dose|dosage|treat|medic(ine)? should|which drug|patient/i
-      .test(text)
-  ) {
-    return "clinical";
-  }
-  if (/expir|expiry|expire|shelf life/i.test(text)) return "expiry";
-  if (/recommend|reorder|purchase|supplier|order/i.test(text)) {
-    return "recommendations";
-  }
-  if (/sale|sell|receipt|revenue|transaction/i.test(text)) return "sales";
-  if (/forecast|demand|predict|model/i.test(text)) return "forecast";
-  if (/stock|inventory|low|out of stock|batches/i.test(text)) {
-    return "low_stock";
-  }
-  return "general";
-}
-
 function medicineLabel(medicine: Record<string, unknown>): string {
   return [medicine.generic_name, medicine.strength].filter(Boolean).join(" ");
+}
+
+async function medicineLabelFacts(
+  question: MedicineQuestion,
+): Promise<Record<string, unknown>> {
+  const searchTerm = question.medicine.replace(/["\\]/g, "").trim();
+  const query =
+    `openfda.generic_name:"${searchTerm}" OR openfda.brand_name:"${searchTerm}"`;
+  const url = new URL("https://api.fda.gov/drug/label.json");
+  url.searchParams.set("search", query);
+  url.searchParams.set("limit", "10");
+
+  const response = await fetch(url, {
+    signal: AbortSignal.timeout(8000),
+    headers: { Accept: "application/json" },
+  });
+  if (!response.ok) {
+    if (response.status === 404) {
+      return { found: false, searched_for: question.medicine };
+    }
+    throw new Error(
+      `Medication label source returned HTTP ${response.status}.`,
+    );
+  }
+  const result: unknown = await response.json();
+  if (!isRecord(result) || !Array.isArray(result.results)) {
+    throw new Error("Medication label source returned an invalid response.");
+  }
+
+  const expected = question.medicine.toLowerCase();
+  const label = result.results.find((item: unknown) => {
+    if (!isRecord(item) || !isRecord(item.openfda)) return false;
+    const names = [
+      ...(Array.isArray(item.openfda.generic_name)
+        ? item.openfda.generic_name
+        : []),
+      ...(Array.isArray(item.openfda.brand_name)
+        ? item.openfda.brand_name
+        : []),
+    ];
+    return names.some((name) =>
+      typeof name === "string" && name.toLowerCase() === expected
+    );
+  });
+  if (!isRecord(label)) {
+    return { found: false, searched_for: question.medicine };
+  }
+
+  const openfda = isRecord(label.openfda) ? label.openfda : {};
+  const labelText = label[question.topic];
+  const extracted = Array.isArray(labelText)
+    ? labelText.filter((text): text is string => typeof text === "string")
+      .join(" ").slice(0, 4000)
+    : "";
+  const setId = Array.isArray(openfda.spl_set_id)
+    ? openfda.spl_set_id.find((value): value is string =>
+      typeof value === "string" &&
+      /^[0-9a-f-]{36}$/i.test(value)
+    )
+    : undefined;
+
+  return {
+    found: Boolean(extracted),
+    searched_for: question.medicine,
+    topic: question.topic,
+    matching_label_product: Array.isArray(openfda.brand_name)
+      ? openfda.brand_name[0]
+      : question.medicine,
+    manufacturer: Array.isArray(openfda.manufacturer_name)
+      ? openfda.manufacturer_name[0]
+      : null,
+    label_effective_date: label.effective_time ?? null,
+    label_excerpt: extracted,
+    source: setId
+      ? {
+        title: "U.S. FDA medication label on DailyMed",
+        url:
+          `https://dailymed.nlm.nih.gov/dailymed/drugInfo.cfm?setid=${setId}`,
+      }
+      : {
+        title: "U.S. FDA drug label database",
+        url: "https://open.fda.gov/apis/drug/label/",
+      },
+    source_disclaimer:
+      "U.S. product label data; labels vary by product and country. The source warns that its structured data is not validated for medical-care decisions.",
+  };
 }
 
 async function lowStockData(client: SupabaseClient, pharmacyId: string) {
@@ -253,7 +316,8 @@ async function forecastData(client: SupabaseClient, pharmacyId: string) {
 async function pharmacyFacts(
   client: SupabaseClient,
   pharmacyId: string,
-  intent: ReturnType<typeof intentFor>,
+  intent: AssistantIntent,
+  question: string,
 ): Promise<Record<string, unknown>> {
   if (intent === "low_stock") {
     return {
@@ -274,6 +338,14 @@ async function pharmacyFacts(
   if (intent === "forecast") {
     return { forecast: await forecastData(client, pharmacyId) };
   }
+  if (intent === "medicine_info") {
+    const medicationQuestion = extractMedicineQuestion(question);
+    if (medicationQuestion) {
+      return {
+        medication_reference: await medicineLabelFacts(medicationQuestion),
+      };
+    }
+  }
   return {
     summary:
       "This assistant can answer questions about stock, expiry, sales, forecasts, and reorder recommendations.",
@@ -281,9 +353,20 @@ async function pharmacyFacts(
 }
 
 function fallbackAnswer(
-  intent: ReturnType<typeof intentFor>,
+  intent: AssistantIntent,
   facts: Record<string, unknown>,
 ): string {
+  if (intent === "medicine_info") {
+    const reference = facts.medication_reference as
+      | Record<string, unknown>
+      | undefined;
+    if (!reference?.found) {
+      return `I could not find a matching U.S. FDA label for "${
+        reference?.searched_for || "that medicine"
+      }". Try the active ingredient name, or ask a pharmacist to verify the exact product.`;
+    }
+    return `I found a matching U.S. product label for ${reference.matching_label_product}, but a safe plain-language summary is unavailable right now. Open the source label and confirm it matches the product you have.`;
+  }
   if (intent === "low_stock") {
     const rows = facts.medicines as Array<Record<string, unknown>>;
     if (!rows?.length) {
@@ -337,7 +420,7 @@ function fallbackAnswer(
 
 async function callProvider(
   question: string,
-  intent: string,
+  intent: AssistantIntent,
   facts: Record<string, unknown>,
 ): Promise<string | null> {
   const apiKey = Deno.env.get("LLM_API_KEY");
@@ -359,22 +442,40 @@ async function callProvider(
           role: "system",
           content: [
             "You are DawaSmart's inventory and forecasting assistant.",
-            "Answer only from supplied pharmacy facts. Do not invent numbers or supplier claims.",
-            "Do not diagnose, prescribe, recommend dosages, or replace a pharmacist.",
+            "For pharmacy questions, answer only from supplied pharmacy facts. For medicine_info, answer only from the supplied U.S. FDA label excerpt.",
+            "Do not invent facts, numbers, label contents, or sources.",
+            "Never diagnose, prescribe, recommend or calculate a dose, judge whether a medicine is safe for a person, or apply general information to an individual.",
+            "Do not call an effect common or frequent unless the supplied label says so. Do not tell a user to start, stop, or change a medicine.",
+            "For medicine_info, give brief general educational information, state that labels vary by product and country, and tell the user to verify with a pharmacist.",
             "Never state that an order was placed or approve a clinical decision.",
             "Keep the answer concise and useful. The user sees data for their own pharmacy only.",
           ].join(" "),
         },
-        { role: "user", content: JSON.stringify({ question, intent, facts }) },
+        {
+          role: "user",
+          content: JSON.stringify({
+            question: intent === "medicine_info"
+              ? extractMedicineQuestion(question)
+              : question,
+            intent,
+            facts,
+          }),
+        },
       ],
     }),
   });
   if (!response.ok) return null;
   const result = await response.json();
   const content = result?.choices?.[0]?.message?.content;
-  return typeof content === "string" && content.trim()
-    ? content.trim().slice(0, 3000)
-    : null;
+  if (typeof content !== "string" || !content.trim()) return null;
+  const answer = content.trim().slice(0, 3000);
+  if (
+    intent === "medicine_info" &&
+    (/\b\d+(?:\.\d+)?\s*(?:mg|mcg|micrograms?|milligrams?|ml|mL|tablets?|capsules?)\b/i
+      .test(answer) ||
+      /\b(?:take|give|use)\s+\d+\b/i.test(answer))
+  ) return null;
+  return answer;
 }
 
 async function logAssistant(
@@ -458,23 +559,40 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   try {
-    const facts = await pharmacyFacts(client, profile.pharmacyId, intent);
+    const facts = await pharmacyFacts(
+      client,
+      profile.pharmacyId,
+      intent,
+      question,
+    );
     const toolsUsed = [intent];
     let answer = await callProvider(question, intent, facts);
-    let status: "answered" | "unavailable" = "answered";
+    const status: "answered" | "unavailable" = "answered";
     if (!answer) {
       answer = fallbackAnswer(intent, facts);
     }
+    const reference = facts.medication_reference as
+      | Record<string, unknown>
+      | undefined;
+    const safetyNotice = intent === "medicine_info"
+      ? [
+        "General information only—not a diagnosis or personal treatment advice. This U.S. label may differ from the product registered in Kenya. Verify the exact product with a pharmacist; for personal symptoms, pregnancy, children, or emergencies, consult a qualified clinician.",
+        reference?.source_disclaimer,
+      ].filter((value): value is string => typeof value === "string")
+        .join(" ")
+      : undefined;
+    const loggedAnswer = safetyNotice ? `${answer}\n\n${safetyNotice}` : answer;
     await logAssistant(
       client,
       profile,
       question,
-      answer,
+      loggedAnswer,
       status,
       toolsUsed,
       Date.now() - started,
     );
-    return respond({ answer, status });
+    const sources = reference?.source ? [reference.source] : [];
+    return respond({ answer, status, safety_notice: safetyNotice, sources });
   } catch (error) {
     console.error("Pharmacy assistant query failed:", error);
     const answer =

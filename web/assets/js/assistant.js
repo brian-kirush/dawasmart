@@ -12,12 +12,45 @@ function setStatus(message) {
   status.hidden = false;
 }
 
-function appendMessage(text, role) {
+function appendMessage(text, role, extras = {}) {
   const article = document.createElement("article");
   article.className = `assistant-message assistant-message-${role}`;
   const paragraph = document.createElement("p");
   paragraph.textContent = text;
   article.append(paragraph);
+  if (extras.safetyNotice) {
+    const notice = document.createElement("p");
+    notice.className = "assistant-safety-note";
+    notice.textContent = extras.safetyNotice;
+    article.append(notice);
+  }
+  if (Array.isArray(extras.sources) && extras.sources.length) {
+    const sourceList = document.createElement("div");
+    sourceList.className = "assistant-sources";
+    for (const source of extras.sources) {
+      if (
+        typeof source?.title !== "string" ||
+        typeof source?.url !== "string"
+      ) continue;
+      let url;
+      try {
+        url = new URL(source.url);
+      } catch {
+        continue;
+      }
+      if (
+        url.protocol !== "https:" ||
+        !["dailymed.nlm.nih.gov", "open.fda.gov"].includes(url.hostname)
+      ) continue;
+      const link = document.createElement("a");
+      link.href = url.href;
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = source.title;
+      sourceList.append(link);
+    }
+    if (sourceList.childElementCount) article.append(sourceList);
+  }
   messages.append(article);
   messages.scrollTop = messages.scrollHeight;
 }
@@ -58,7 +91,10 @@ async function ask(question) {
       throw new Error(message);
     }
     thinkingMessage.remove();
-    appendMessage(data.answer, "bot");
+    appendMessage(data.answer, "bot", {
+      safetyNotice: data.safety_notice,
+      sources: data.sources,
+    });
   } catch (error) {
     if (thinkingMessage?.isConnected) thinkingMessage.remove();
     const message = error instanceof Error

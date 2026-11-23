@@ -19,7 +19,7 @@
             <p class="eyebrow">Decision support</p>
             <h1>DawaSmart Assistant</h1>
             <p class="text-secondary mb-0">
-              Ask about stock, expiry risk, sales, forecasts, and reorder suggestions.
+              Ask about pharmacy operations or general medicine information.
             </p>
           </div>
           <span class="status-chip status-chip-neutral">Your pharmacy only</span>
@@ -47,13 +47,20 @@
             <button type="button" class="btn btn-outline-secondary btn-sm" data-question="Summarize recent sales.">
               Recent sales
             </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-question="What is paracetamol used for?">
+              Medicine uses
+            </button>
+            <button type="button" class="btn btn-outline-secondary btn-sm" data-question="What are common side effects of amoxicillin?">
+              Common side effects
+            </button>
           </div>
 
           <div class="assistant-messages" id="assistant-messages" aria-live="polite">
             <article class="assistant-message assistant-message-bot">
               <p>
-                Hello. I can summarize recorded inventory and forecasting data for
-                this pharmacy. I cannot place orders or provide clinical advice.
+                Hello. I can summarize this pharmacy's inventory and forecasts,
+                or find general medicine information in U.S. FDA labels. I cannot
+                diagnose, recommend treatment, or give dosage advice.
               </p>
             </article>
           </div>
@@ -65,7 +72,7 @@
               id="assistant-question"
               rows="2"
               maxlength="1000"
-              placeholder="Ask a question about this pharmacy..."
+              placeholder="Ask about stock, expiry, sales, forecasts, or a medicine..."
               required
             ></textarea>
             <button class="btn btn-primary" id="assistant-send" type="submit">

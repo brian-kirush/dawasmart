@@ -513,6 +513,27 @@ h2 {
   gap: 1rem;
 }
 
+.assistant-shortcut {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.assistant-safety-note,
+.assistant-sources {
+  margin-top: 0.65rem !important;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.assistant-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
 .assistant-suggestions {
   display: flex;
   flex-wrap: wrap;
@@ -542,7 +563,7 @@ h2 {
 
 .assistant-message-user {
   align-self: flex-end;
-  background: var(--primary);
+  background: var(--green);
   color: #fff;
 }
 
@@ -557,6 +578,17 @@ h2 {
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: end;
   gap: 0.75rem;
+}
+
+@media (max-width: 575px) {
+  .assistant-shortcut {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .assistant-message {
+    max-width: 96%;
+  }
 }
 
 .medicine-list-heading {

@@ -332,9 +332,16 @@ or dashboard steps.
 The signed-in pharmacy assistant is available at `web/assistant.html`. It is
 restricted to the user's active pharmacy and answers from unexpired stock,
 expiry batches, recent sales, forecast results, and reorder recommendations.
-It does not diagnose, prescribe, calculate doses, place orders, or modify
-data. Clinical or patient-specific questions are refused. Replies are written
+It can also summarize selected general medication topics from a matching
+U.S. FDA label via openFDA, with a DailyMed source link and a warning that
+labels vary by product and country. If the optional language model is not
+configured, it links to the original label instead of inventing a medical
+summary. It does not diagnose, prescribe, calculate doses, provide patient-
+specific treatment, place orders, or modify pharmacy data. Replies are written
 to `assistant_logs` for pharmacy- and administrator-readable audit history.
+
+The overview dashboard includes a direct **Ask the assistant** shortcut for
+administrators and pharmacists, in addition to the navigation link.
 
 Deploy the Edge Function from the project root:
 

@@ -34,6 +34,12 @@ Deno.test("pharmacy inventory questions keep their operational intent", () => {
   }
 });
 
+Deno.test("greetings are handled without the language model", () => {
+  if (intentFor("Hello!") !== "greeting") {
+    throw new Error("Expected a greeting intent.");
+  }
+});
+
 Deno.test("medicine terms outside supported question forms are not improvised", () => {
   if (intentFor("How do I treat a cough with medicine?") !== "clinical") {
     throw new Error("Expected unsupported medical advice to be refused.");

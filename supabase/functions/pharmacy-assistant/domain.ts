@@ -4,6 +4,7 @@ export type AssistantIntent =
   | "recommendations"
   | "sales"
   | "forecast"
+  | "greeting"
   | "medicine_info"
   | "clinical"
   | "general";
@@ -19,6 +20,13 @@ export type MedicineQuestion = {
 
 export function intentFor(question: string): AssistantIntent {
   const text = question.toLowerCase();
+  if (
+    /^(hi|hello|hey|good morning|good afternoon|good evening)[!. ]*$/i.test(
+      question.trim(),
+    )
+  ) {
+    return "greeting";
+  }
   if (
     /\b(i have|i am|i'm|my symptoms|my medication|my medicine|my drug|my child|my baby|pregnant|pregnancy|breastfeeding|took|taking|should i take|can i take|should i stop|can i use|what dose|dosage|diagnos|symptoms?|patient-specific|dose for|emergency|treat my|for my|for me|in my case|is it safe for me|can someone with|can a person with|if you have)\b/i
       .test(text)

@@ -428,54 +428,66 @@ async function callProvider(
   const endpoint = Deno.env.get("LLM_API_URL") ||
     "https://api.openai.com/v1/chat/completions";
   const model = Deno.env.get("LLM_MODEL") || "gpt-4o-mini";
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Authorization": `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      temperature: 0,
-      messages: [
-        {
-          role: "system",
-          content: [
-            "You are DawaSmart's inventory and forecasting assistant.",
-            "For pharmacy questions, answer only from supplied pharmacy facts. For medicine_info, answer only from the supplied U.S. FDA label excerpt.",
-            "Do not invent facts, numbers, label contents, or sources.",
-            "Never diagnose, prescribe, recommend or calculate a dose, judge whether a medicine is safe for a person, or apply general information to an individual.",
-            "Do not call an effect common or frequent unless the supplied label says so. Do not tell a user to start, stop, or change a medicine.",
-            "For medicine_info, give brief general educational information, state that labels vary by product and country, and tell the user to verify with a pharmacist.",
-            "Never state that an order was placed or approve a clinical decision.",
-            "Keep the answer concise and useful. The user sees data for their own pharmacy only.",
-          ].join(" "),
-        },
-        {
-          role: "user",
-          content: JSON.stringify({
-            question: intent === "medicine_info"
-              ? extractMedicineQuestion(question)
-              : question,
-            intent,
-            facts,
-          }),
-        },
-      ],
-    }),
-  });
-  if (!response.ok) return null;
-  const result = await response.json();
-  const content = result?.choices?.[0]?.message?.content;
-  if (typeof content !== "string" || !content.trim()) return null;
-  const answer = content.trim().slice(0, 3000);
-  if (
-    intent === "medicine_info" &&
-    (/\b\d+(?:\.\d+)?\s*(?:mg|mcg|micrograms?|milligrams?|ml|mL|tablets?|capsules?)\b/i
-      .test(answer) ||
-      /\b(?:take|give|use)\s+\d+\b/i.test(answer))
-  ) return null;
-  return answer;
+  try {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      signal: AbortSignal.timeout(15000),
+      headers: {
+        "Authorization": `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model,
+        temperature: 0,
+        messages: [
+          {
+            role: "system",
+            content: [
+              "You are DawaSmart's inventory and forecasting assistant.",
+              "For pharmacy questions, answer only from supplied pharmacy facts. For medicine_info, answer only from the supplied U.S. FDA label excerpt.",
+              "Do not invent facts, numbers, label contents, or sources.",
+              "Never diagnose, prescribe, recommend or calculate a dose, judge whether a medicine is safe for a person, or apply general information to an individual.",
+              "Do not call an effect common or frequent unless the supplied label says so. Do not tell a user to start, stop, or change a medicine.",
+              "For medicine_info, give brief general educational information, state that labels vary by product and country, and tell the user to verify with a pharmacist.",
+              "Never state that an order was placed or approve a clinical decision.",
+              "Keep the answer concise and useful. The user sees data for their own pharmacy only.",
+            ].join(" "),
+          },
+          {
+            role: "user",
+            content: JSON.stringify({
+              question: intent === "medicine_info"
+                ? extractMedicineQuestion(question)
+                : question,
+              intent,
+              facts,
+            }),
+          },
+        ],
+      }),
+    });
+    if (!response.ok) {
+      console.error(`Language model returned HTTP ${response.status}.`);
+      return null;
+    }
+    const result = await response.json();
+    const content = result?.choices?.[0]?.message?.content;
+    if (typeof content !== "string" || !content.trim()) return null;
+    const answer = content.trim().slice(0, 3000);
+    if (
+      intent === "medicine_info" &&
+      (/\b\d+(?:\.\d+)?\s*(?:mg|mcg|micrograms?|milligrams?|ml|mL|tablets?|capsules?)\b/i
+        .test(answer) ||
+        /\b(?:take|give|use)\s+\d+\b/i.test(answer))
+    ) return null;
+    return answer;
+  } catch (error) {
+    console.error(
+      "Language model request failed; using a grounded fallback.",
+      error,
+    );
+    return null;
+  }
 }
 
 async function logAssistant(
@@ -543,6 +555,20 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   const intent = intentFor(question);
+  if (intent === "greeting") {
+    const answer =
+      "Hello! I can help with pharmacy stock, expiry, sales, forecasts, reorder suggestions, and general medicine information. What would you like to know?";
+    await logAssistant(
+      client,
+      profile,
+      question,
+      answer,
+      "answered",
+      [],
+      Date.now() - started,
+    );
+    return respond({ answer, status: "answered", ai_status: "not_needed" });
+  }
   if (intent === "clinical") {
     const answer =
       "I cannot diagnose, recommend medicines or doses, or provide patient-specific clinical advice. Please consult a pharmacist or licensed clinician.";
@@ -568,6 +594,11 @@ Deno.serve(async (request: Request): Promise<Response> => {
     const toolsUsed = [intent];
     let answer = await callProvider(question, intent, facts);
     const status: "answered" | "unavailable" = "answered";
+    const aiStatus = !Deno.env.get("LLM_API_KEY")
+      ? "not_configured"
+      : answer
+      ? "available"
+      : "unavailable";
     if (!answer) {
       answer = fallbackAnswer(intent, facts);
     }
@@ -592,14 +623,30 @@ Deno.serve(async (request: Request): Promise<Response> => {
       Date.now() - started,
     );
     const sources = reference?.source ? [reference.source] : [];
-    return respond({ answer, status, safety_notice: safetyNotice, sources });
+    const serviceNotice = aiStatus === "not_configured"
+      ? "Language model not configured; showing a direct data-based response."
+      : aiStatus === "unavailable"
+      ? "Language model unavailable; showing a direct data-based response."
+      : undefined;
+    return respond({
+      answer,
+      status,
+      ai_status: aiStatus,
+      safety_notice: safetyNotice,
+      service_notice: serviceNotice,
+      sources,
+    });
   } catch (error) {
     console.error("Pharmacy assistant query failed:", error);
     const answer =
-      "I could not retrieve the pharmacy data needed to answer safely.";
+      "I could not retrieve the pharmacy data needed to answer. Check that the pharmacy-assistant Edge Function and required database migrations are deployed, then review its Supabase function logs.";
     await logAssistant(client, profile, question, answer, "unavailable", [
       intent,
     ], Date.now() - started);
-    return respond({ answer, status: "unavailable" }, 502);
+    return respond({
+      answer,
+      error: "Pharmacy data query failed.",
+      status: "unavailable",
+    }, 502);
   }
 });

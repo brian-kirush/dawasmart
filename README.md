@@ -198,15 +198,17 @@ the lead-time demand plus safety-stock reorder point; it is not an order date.
 The Python service calls the `recommendation-explanation` Supabase Edge
 Function, which sends medicine identity, stock, supplier lead time, and
 forecast-derived recommendation facts to an OpenAI-compatible provider. It
-sends no supplier names, patient data, or patient identifiers. The provider
-call is isolated in one function; configure `LLM_API_KEY` and, if needed,
-`LLM_API_URL` and `LLM_MODEL` as Supabase Edge Function secrets, then deploy
+does not send supplier names, patient data, or patient identifiers. The
+language-model provider is optional: without `LLM_API_KEY`, the function
+creates a deterministic one-sentence explanation from the stored facts. With
+a provider configured, set `LLM_API_KEY` and optionally `LLM_API_URL` and
+`LLM_MODEL` as Supabase Edge Function secrets. Deploy
 `recommendation-explanation` from
 `supabase/functions/recommendation-explanation`. The function accepts calls
 only from the service-role forecasting backend and never writes to the
-database. The Python service stores its
-one-sentence explanation with the numerical rationale and falls back to the
-raw stored figures if the wording includes an unsupported number.
+database. The Python service stores its one-sentence explanation with the
+numerical rationale and falls back to the raw stored figures if generated
+wording includes an unsupported number.
 
 The Reorder recommendations page reads only the latest forecast run.
 Administrators and pharmacists can accept, modify, or dismiss a pending
@@ -322,10 +324,10 @@ Auth redirect URLs if staff invitations are enabled. The frontend static URL
 must use HTTPS and the Supabase publishable key in
 `web/assets/js/supabase-config.js`.
 
-Configure `recommendation-explanation` separately with `LLM_API_KEY`,
-`LLM_API_URL`, and `LLM_MODEL` in Supabase Edge Function secrets. Render does
-not deploy Supabase migrations or Edge Functions; these remain Supabase CLI
-or dashboard steps.
+An AI provider key is optional. If you choose to use one, configure
+`LLM_API_KEY` and optionally `LLM_API_URL` and `LLM_MODEL` in Supabase Edge
+Function secrets. Render does not deploy Supabase migrations or Edge
+Functions; these remain Supabase CLI or dashboard steps.
 
 ## Pharmacy Assistant
 
@@ -349,10 +351,11 @@ Deploy the Edge Function from the project root:
 supabase functions deploy pharmacy-assistant
 ```
 
-Configure the existing `LLM_API_KEY` and optionally `LLM_API_URL` and
-`LLM_MODEL` secrets before using natural-language wording. If no LLM key is
-configured, the function returns deterministic summaries from the same
-pharmacy-scoped facts. Supabase supplies `SUPABASE_URL` and
+An LLM key is not required. Without one, the assistant returns deterministic
+answers for supported pharmacy operations questions and links directly to the
+FDA label for general medicine questions. Add `LLM_API_KEY` and optionally
+`LLM_API_URL` and `LLM_MODEL` as Supabase secrets only if you later want
+natural-language summaries. Supabase supplies `SUPABASE_URL` and
 `SUPABASE_SERVICE_ROLE_KEY` to deployed Edge Functions.
 
 ## Privacy and region

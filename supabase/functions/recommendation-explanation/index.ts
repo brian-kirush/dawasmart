@@ -1,25 +1,13 @@
+import {
+  fallbackExplanation,
+  type RecommendationFacts,
+} from "./explanation.ts";
+
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
-type RecommendationFacts = {
-  medicine_name: string;
-  dispensing_unit: string;
-  recommendation_date: string;
-  dataset_kind: "synthetic" | "real";
-  forecast_demand_28_days: number;
-  lead_time_demand: number;
-  safety_stock: number;
-  target_stock: number;
-  available_stock: number;
-  recommended_quantity: number;
-  lead_time_days: number;
-  reorder_point: number;
-  projected_stock_at_order: number;
-  days_until_reorder: number;
-  service_level_percent: number;
 };
 
 function isFacts(value: unknown): value is RecommendationFacts {
@@ -42,13 +30,13 @@ function isFacts(value: unknown): value is RecommendationFacts {
     const fieldValue = facts[field];
     return typeof fieldValue === "number" && Number.isFinite(fieldValue);
   });
-  return typeof facts.medicine_name === "string"
-    && facts.medicine_name.length <= 200
-    && typeof facts.dispensing_unit === "string"
-    && facts.dispensing_unit.length <= 80
-    && typeof facts.recommendation_date === "string"
-    && (facts.dataset_kind === "synthetic" || facts.dataset_kind === "real")
-    && finiteNumbers;
+  return typeof facts.medicine_name === "string" &&
+    facts.medicine_name.length <= 200 &&
+    typeof facts.dispensing_unit === "string" &&
+    facts.dispensing_unit.length <= 80 &&
+    typeof facts.recommendation_date === "string" &&
+    (facts.dataset_kind === "synthetic" || facts.dataset_kind === "real") &&
+    finiteNumbers;
 }
 
 function hasServiceRole(request: Request): boolean {
@@ -61,10 +49,10 @@ function hasServiceRole(request: Request): boolean {
     const decoded = atob(base64.padEnd(Math.ceil(base64.length / 4) * 4, "="));
     const claims: unknown = JSON.parse(decoded);
     return Boolean(
-      claims
-      && typeof claims === "object"
-      && "role" in claims
-      && claims.role === "service_role"
+      claims &&
+        typeof claims === "object" &&
+        "role" in claims &&
+        claims.role === "service_role",
     );
   } catch {
     return false;
@@ -75,10 +63,10 @@ async function callProvider(
   facts: RecommendationFacts,
 ): Promise<string> {
   const apiKey = Deno.env.get("LLM_API_KEY");
-  if (!apiKey) throw new Error("LLM_API_KEY is not configured.");
+  if (!apiKey) return fallbackExplanation(facts);
 
-  const endpoint = Deno.env.get("LLM_API_URL")
-    ?? "https://api.openai.com/v1/chat/completions";
+  const endpoint = Deno.env.get("LLM_API_URL") ??
+    "https://api.openai.com/v1/chat/completions";
   const model = Deno.env.get("LLM_MODEL") ?? "gpt-4o-mini";
   const response = await fetch(endpoint, {
     method: "POST",
@@ -121,7 +109,10 @@ async function callProvider(
     throw new Error("LLM provider returned no explanation choices.");
   }
   const firstChoice: unknown = choices[0];
-  if (!firstChoice || typeof firstChoice !== "object" || !("message" in firstChoice)) {
+  if (
+    !firstChoice || typeof firstChoice !== "object" ||
+    !("message" in firstChoice)
+  ) {
     throw new Error("LLM provider returned no explanation message.");
   }
   const message: unknown = firstChoice.message;
@@ -136,10 +127,10 @@ async function callProvider(
   const explanation = content.trim();
   const sentenceEndings = explanation.match(/[.!?](?=\s|$)/g) || [];
   if (
-    !explanation
-    || explanation.length > 500
-    || /[\r\n]/.test(explanation)
-    || sentenceEndings.length !== 1
+    !explanation ||
+    explanation.length > 500 ||
+    /[\r\n]/.test(explanation) ||
+    sentenceEndings.length !== 1
   ) {
     throw new Error("LLM provider returned an invalid explanation.");
   }
@@ -173,7 +164,12 @@ Deno.serve(async (request: Request): Promise<Response> => {
 
   try {
     const explanation = await callProvider(value);
-    return Response.json({ explanation }, { headers: corsHeaders });
+    const aiStatus = Deno.env.get("LLM_API_KEY")
+      ? "available"
+      : "not_configured";
+    return Response.json({ explanation, ai_status: aiStatus }, {
+      headers: corsHeaders,
+    });
   } catch (error) {
     console.error("Recommendation explanation generation failed:", error);
     return Response.json(

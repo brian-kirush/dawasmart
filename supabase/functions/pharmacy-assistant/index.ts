@@ -161,7 +161,9 @@ async function medicineLabelFacts(
 async function lowStockData(client: SupabaseClient, pharmacyId: string) {
   const { data: medicines, error: medicineError } = await client
     .from("medicines")
-    .select("id, generic_name, strength, form, dispensing_unit, is_active")
+    .select(
+      "id, generic_name, strength, dosage_form, dispensing_unit, is_active",
+    )
     .eq("pharmacy_id", pharmacyId)
     .eq("is_active", true);
   if (medicineError) throw medicineError;

@@ -301,6 +301,32 @@ the requirements and selecting the project's Python environment in Jupyter.
 Verify current package versions and the target host's scheduling and storage
 features before deployment.
 
+## Render deployment
+
+The repository includes a Render Blueprint in `render.yaml`. It declares:
+
+- `dawasmart-api`: the protected Python/FastAPI forecasting service
+- `dawasmart`: the static web frontend
+
+Create both services from **New > Blueprint** in Render and select this GitHub
+repository. Render will ask for the values of `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY`; enter them in the dashboard and keep the service
+role key out of source control. Render generates `FORECAST_API_TOKEN`
+automatically. The placeholder pharmacy ID in the Blueprint is the seeded
+synthetic demo pharmacy; change it only if the deployed project should run
+for a different pharmacy.
+
+After deployment, set the service URL as `APP_SITE_URL` in the Supabase
+`admin-users` Edge Function and add `<APP_SITE_URL>/login.html` to Supabase
+Auth redirect URLs if staff invitations are enabled. The frontend static URL
+must use HTTPS and the Supabase publishable key in
+`web/assets/js/supabase-config.js`.
+
+Configure `recommendation-explanation` separately with `LLM_API_KEY`,
+`LLM_API_URL`, and `LLM_MODEL` in Supabase Edge Function secrets. Render does
+not deploy Supabase migrations or Edge Functions; these remain Supabase CLI
+or dashboard steps.
+
 ## Privacy and region
 
 The application is intended to avoid patient names and identifiers; no patient

@@ -79,9 +79,10 @@ python3 -m http.server 8000 --directory web
 
 Open `http://localhost:8000/login.html`,
 `http://localhost:8000/dashboard.html`, or
-`http://localhost:8000/medicines.html`. Bootstrap 5 and Supabase JS are loaded
-from CDNs, so the app requires internet access. The pages currently pin
-Bootstrap 5.3.3 and import Supabase JS 2.x; verify current versions against
+`http://localhost:8000/medicines.html`. The root URL redirects to the login
+page via `web/index.html`. Bootstrap 5 and Supabase JS are loaded from CDNs,
+so the app requires internet access. The pages currently pin Bootstrap 5.3.3
+and import Supabase JS 2.x; verify current versions against
 their official documentation before deployment. Login and medicine operations
 work only after the database is running and the Supabase client has the project
 URL and anon/publishable key in

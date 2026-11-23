@@ -1,0 +1,8 @@
+[build]
+  publish = "web"
+
+# The app has no index.html; send visitors at the site root to the login page.
+[[redirects]]
+  from = "/"
+  to = "/login.html"
+  status = 302

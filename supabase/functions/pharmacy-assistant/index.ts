@@ -29,11 +29,6 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isGratitude(question: string): boolean {
-  return /^(thanks|thank you|thanks a lot|thank you so much|much appreciated)[!. ]*$/i
-    .test(question.trim());
-}
-
 function adminClient(): SupabaseClient {
   const url = Deno.env.get("SUPABASE_URL");
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -562,7 +557,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
   }
 
   const intent = intentFor(question);
-  if (isGratitude(question)) {
+  if (intent === "gratitude") {
     const answer =
       "You're welcome! I can help with stock, expiry, sales, forecasts, reorder suggestions, and general medicine information.";
     await logAssistant(

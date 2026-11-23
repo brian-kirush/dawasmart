@@ -40,6 +40,12 @@ Deno.test("greetings are handled without the language model", () => {
   }
 });
 
+Deno.test("thanks are handled without the language model", () => {
+  if (intentFor("Thank you!") !== "gratitude") {
+    throw new Error("Expected a gratitude intent.");
+  }
+});
+
 Deno.test("medicine terms outside supported question forms are not improvised", () => {
   if (intentFor("How do I treat a cough with medicine?") !== "clinical") {
     throw new Error("Expected unsupported medical advice to be refused.");

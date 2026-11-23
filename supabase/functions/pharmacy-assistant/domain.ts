@@ -5,6 +5,7 @@ export type AssistantIntent =
   | "sales"
   | "forecast"
   | "greeting"
+  | "gratitude"
   | "medicine_info"
   | "clinical"
   | "general";
@@ -26,6 +27,12 @@ export function intentFor(question: string): AssistantIntent {
     )
   ) {
     return "greeting";
+  }
+  if (
+    /^(thanks|thank you|thanks a lot|thank you so much|much appreciated)[!. ]*$/i
+      .test(question.trim())
+  ) {
+    return "gratitude";
   }
   if (
     /\b(i have|i am|i'm|my symptoms|my medication|my medicine|my drug|my child|my baby|pregnant|pregnancy|breastfeeding|took|taking|should i take|can i take|should i stop|can i use|what dose|dosage|diagnos|symptoms?|patient-specific|dose for|emergency|treat my|for my|for me|in my case|is it safe for me|can someone with|can a person with|if you have)\b/i

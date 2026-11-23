@@ -196,19 +196,11 @@ extension. The recommendation date estimates when forecast depletion reaches
 the lead-time demand plus safety-stock reorder point; it is not an order date.
 
 The Python service calls the `recommendation-explanation` Supabase Edge
-Function, which sends medicine identity, stock, supplier lead time, and
-forecast-derived recommendation facts to an OpenAI-compatible provider. It
-does not send supplier names, patient data, or patient identifiers. The
-language-model provider is optional: without `LLM_API_KEY`, the function
-creates a deterministic one-sentence explanation from the stored facts. With
-a provider configured, set `LLM_API_KEY` and optionally `LLM_API_URL` and
-`LLM_MODEL` as Supabase Edge Function secrets. Deploy
-`recommendation-explanation` from
-`supabase/functions/recommendation-explanation`. The function accepts calls
-only from the service-role forecasting backend and never writes to the
-database. The Python service stores its one-sentence explanation with the
-numerical rationale and falls back to the raw stored figures if generated
-wording includes an unsupported number.
+Function, which creates a deterministic one-sentence explanation from the
+stored forecast and stock facts. It uses no external language-model provider
+or API key, sends no supplier names or patient data, and never writes to the
+database. The function accepts calls only from the service-role forecasting
+backend. Deploy it from `supabase/functions/recommendation-explanation`.
 
 The Reorder recommendations page reads only the latest forecast run.
 Administrators and pharmacists can accept, modify, or dismiss a pending
@@ -324,23 +316,22 @@ Auth redirect URLs if staff invitations are enabled. The frontend static URL
 must use HTTPS and the Supabase publishable key in
 `web/assets/js/supabase-config.js`.
 
-An AI provider key is optional. If you choose to use one, configure
-`LLM_API_KEY` and optionally `LLM_API_URL` and `LLM_MODEL` in Supabase Edge
-Function secrets. Render does not deploy Supabase migrations or Edge
-Functions; these remain Supabase CLI or dashboard steps.
+The application does not require an AI provider key. Render does not deploy
+Supabase migrations or Edge Functions; these remain Supabase CLI or dashboard
+steps.
 
 ## Pharmacy Assistant
 
 The signed-in pharmacy assistant is available at `web/assistant.html`. It is
 restricted to the user's active pharmacy and answers from unexpired stock,
 expiry batches, recent sales, forecast results, and reorder recommendations.
-It can also summarize selected general medication topics from a matching
-U.S. FDA label via openFDA, with a DailyMed source link and a warning that
-labels vary by product and country. If the optional language model is not
-configured, it links to the original label instead of inventing a medical
-summary. It does not diagnose, prescribe, calculate doses, provide patient-
-specific treatment, place orders, or modify pharmacy data. Replies are written
-to `assistant_logs` for pharmacy- and administrator-readable audit history.
+For selected general medication questions, it looks up a matching U.S. FDA
+label via openFDA and links to the DailyMed source; it does not generate a
+medical summary. It does not diagnose, prescribe, calculate doses, provide
+patient-specific treatment, place orders, or modify pharmacy data. Pharmacy
+answers are deterministic summaries of the signed-in pharmacy's records.
+Replies are written to `assistant_logs` for pharmacy- and administrator-
+readable audit history.
 
 The overview dashboard includes a direct **Ask the assistant** shortcut for
 administrators and pharmacists, in addition to the navigation link.
@@ -351,11 +342,8 @@ Deploy the Edge Function from the project root:
 supabase functions deploy pharmacy-assistant
 ```
 
-An LLM key is not required. Without one, the assistant returns deterministic
-answers for supported pharmacy operations questions and links directly to the
-FDA label for general medicine questions. Add `LLM_API_KEY` and optionally
-`LLM_API_URL` and `LLM_MODEL` as Supabase secrets only if you later want
-natural-language summaries. Supabase supplies `SUPABASE_URL` and
+The assistant and recommendation explanations use no language-model API and
+need no provider secrets. Supabase supplies `SUPABASE_URL` and
 `SUPABASE_SERVICE_ROLE_KEY` to deployed Edge Functions.
 
 ## Privacy and region

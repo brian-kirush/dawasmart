@@ -24,12 +24,6 @@ function appendMessage(text, role, extras = {}) {
     notice.textContent = extras.safetyNotice;
     article.append(notice);
   }
-  if (extras.serviceNotice) {
-    const notice = document.createElement("p");
-    notice.className = "assistant-safety-note";
-    notice.textContent = extras.serviceNotice;
-    article.append(notice);
-  }
   if (Array.isArray(extras.sources) && extras.sources.length) {
     const sourceList = document.createElement("div");
     sourceList.className = "assistant-sources";
@@ -93,7 +87,6 @@ async function ask(question) {
             thinkingMessage.remove();
             appendMessage(result.answer, "bot", {
               safetyNotice: result.safety_notice,
-              serviceNotice: result.service_notice,
               sources: result.sources,
             });
             return;
@@ -111,7 +104,6 @@ async function ask(question) {
     thinkingMessage.remove();
     appendMessage(data.answer, "bot", {
       safetyNotice: data.safety_notice,
-      serviceNotice: data.service_notice,
       sources: data.sources,
     });
   } catch (error) {

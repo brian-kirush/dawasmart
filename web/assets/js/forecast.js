@@ -245,7 +245,7 @@ async function loadForecast() {
     document.querySelector("#forecast-source").textContent =
       `Source: Supabase forecast results · run saved ${formatRunDate(run.created_at)}.`;
     document.querySelector("#forecast-run-label").textContent =
-      run.dataset_kind === "synthetic" ? "Synthetic run" : "Latest run";
+      run.dataset_kind === "synthetic" ? "Online sample run" : "Latest run";
     document.querySelector("#forecast-updated").textContent =
       `Run saved ${formatRunDate(run.created_at)}`;
     renderTable(sortedMedicineIds);

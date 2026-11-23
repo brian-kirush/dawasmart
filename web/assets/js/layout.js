@@ -194,7 +194,9 @@ if (app) {
         .join("");
       const datasetKind = document.querySelector("#dataset-kind");
       datasetKind.textContent =
-        context.pharmacy.dataset_kind === "synthetic" ? "Synthetic data" : "Real data";
+        context.pharmacy.dataset_kind === "synthetic"
+          ? "Online"
+          : "Real data";
       datasetKind.hidden = false;
       signOutButton.disabled = false;
 

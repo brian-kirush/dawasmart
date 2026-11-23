@@ -34,7 +34,7 @@ Deno.test("fallback explanation uses stored facts and pharmacist review", () => 
   }
 });
 
-Deno.test("synthetic recommendations are labeled as demonstration data", () => {
+Deno.test("sample recommendations are identified as online example data", () => {
   const result = fallbackExplanation({
     medicine_name: "Example medicine",
     dispensing_unit: "pack",
@@ -52,7 +52,7 @@ Deno.test("synthetic recommendations are labeled as demonstration data", () => {
     days_until_reorder: 0,
     service_level_percent: 95,
   });
-  if (!result.startsWith("For synthetic demonstration data,")) {
-    throw new Error("Expected synthetic data to be labeled.");
+  if (!result.startsWith("For online,")) {
+    throw new Error("Expected sample data to be labeled.");
   }
 });

@@ -12,7 +12,7 @@ decisions.
 web/                    Static HTML, CSS, and vanilla JavaScript frontend
 supabase/
   migrations/           PostgreSQL schema, constraints, policies, and triggers
-  seed.sql              Clearly labelled synthetic demo records
+  seed.sql              Clearly labelled online sample records
 forecasting/            Python forecasting service and evaluation (Phase 4)
 ```
 
@@ -25,8 +25,8 @@ developed in Phase 4.
 
 - Every business record belongs to a pharmacy. This supports pharmacy-scoped
   access and one forecast series per medicine per pharmacy.
-- The seed pharmacy and its sample inventory are synthetic. Do not treat them
-  as real supplier, medicine, or sales records.
+- The seed pharmacy and inventory contain online sample records. Do not treat
+  them as real supplier, medicine, or sales records.
 - `profiles` are linked to Supabase Auth users. A trusted operator must
   provision the initial administrator profile; never let a browser choose its
   own role.
@@ -63,7 +63,7 @@ The profile table intentionally has no direct browser write policy, so a
 client cannot grant itself administrator access. The administrator user
 workflow uses a role-checked database function for staff profiles.
 
-For the hosted demo only, `supabase/bootstrap_profiles.sql` creates the
+For this hosted project only, `supabase/bootstrap_profiles.sql` creates the
 administrator and pharmacist profiles for the Auth users provisioned for this
 project. Run `supabase/seed.sql` first, then paste the bootstrap file into the
 hosted project's SQL Editor. The bootstrap file is git-ignored because it
@@ -174,7 +174,7 @@ administrator-only RLS policy, with date, record-type, and action filters. It
 shows event metadata only; it does not display the stored before/after row
 snapshots. The Settings page lets administrators update the pharmacy name and
 county, which are recorded by the existing audit trigger. Kenya and the
-synthetic/real dataset classification remain read-only. Light/dark appearance
+online sample/real dataset classification remain read-only. Light/dark appearance
 is a browser-local preference and is not shared with other staff.
 
 ## Reorder recommendations
@@ -250,11 +250,12 @@ assumed to equal 14 days of training-mean demand, the forecasted order covers
 the evaluation horizon, and stock remaining at day 90 is counted as expired.
 It is a comparison metric, not a reconstruction of actual pharmacy stock.
 
-The synthetic demo pharmacy uses deterministic generated demand from
+The online sample pharmacy uses deterministic generated demand from
 2022-01-01 through yesterday; it does not insert generated rows into sales.
-Runs are labelled `synthetic` in `forecast_runs`. Real-pharmacy series without
+Runs are internally tagged as `dataset_kind = 'synthetic'` in `forecast_runs`.
+Real-pharmacy series without
 enough history to cover the required evaluation periods are reported as
-skipped; synthetic demand is never silently mixed into real-pharmacy sales.
+skipped; sample demand is never silently mixed into real-pharmacy sales.
 Forecasts are decision support only, not clinical advice or automatic orders.
 
 To run locally from the project root:
@@ -270,7 +271,7 @@ Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, and a strong
 `FORECAST_API_TOKEN` in `forecasting/.env`. The service-role key and forecast
 token are server-only secrets: do not put them in `web/`, commit them, or send
 them to the browser. The ignored `.env` file is loaded by the Python service.
-The example also sets `FORECAST_PHARMACY_ID` to the seeded synthetic demo
+The example also sets `FORECAST_PHARMACY_ID` to the seeded online sample
 pharmacy, so an initial run is scoped to that pharmacy. Confirm the ID matches
 the target project before running; an unknown ID fails rather than falling
 back to processing every pharmacy. Clear this setting only when the service
@@ -308,7 +309,7 @@ repository. Render will ask for the values of `SUPABASE_URL` and
 `SUPABASE_SERVICE_ROLE_KEY`; enter them in the dashboard and keep the service
 role key out of source control. Render generates `FORECAST_API_TOKEN`
 automatically. The placeholder pharmacy ID in the Blueprint is the seeded
-synthetic demo pharmacy; change it only if the deployed project should run
+online sample pharmacy; change it only if the deployed project should run
 for a different pharmacy.
 
 After deployment, set the service URL as `APP_SITE_URL` in the Supabase

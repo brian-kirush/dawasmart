@@ -17,7 +17,7 @@ function setStatus(message, kind = "danger") {
 }
 
 function displayDatasetKind(value) {
-  return value === "synthetic" ? "Synthetic demonstration data" : "Real data";
+  return value === "synthetic" ? "Online" : "Real data";
 }
 
 async function loadSettings() {

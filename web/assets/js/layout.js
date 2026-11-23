@@ -90,6 +90,10 @@ if (app) {
             <span class="sidebar-link-marker" aria-hidden="true">D</span>
             <span>Reports</span>
           </a>
+          <a class="sidebar-link" href="./assistant.html" data-nav="assistant">
+            <span class="sidebar-link-marker" aria-hidden="true">AI</span>
+            <span>Assistant</span>
+          </a>
         </nav>
         <p class="sidebar-section-label mt-4" data-admin-only hidden>Administration</p>
         <nav class="sidebar-nav" aria-label="Administration" data-admin-only hidden>

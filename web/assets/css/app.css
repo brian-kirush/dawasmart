@@ -4,6 +4,7 @@
   --muted: #64736d;
   --line: #e2e9e5;
   --surface: #ffffff;
+  --surface-muted: #f1f6f3;
   --canvas: #f5f8f6;
   --green: #176b51;
   --green-dark: #10513e;
@@ -503,6 +504,59 @@ h2 {
 
 .content-card {
   padding: 1.25rem;
+}
+
+.assistant-card {
+  display: grid;
+  min-height: 36rem;
+  grid-template-rows: auto minmax(20rem, 1fr) auto;
+  gap: 1rem;
+}
+
+.assistant-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.assistant-messages {
+  display: flex;
+  overflow-y: auto;
+  max-height: 32rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  border-block: 1px solid var(--line);
+  padding-block: 1rem;
+}
+
+.assistant-message {
+  max-width: 82%;
+  border-radius: 1rem;
+  padding: 0.75rem 0.9rem;
+}
+
+.assistant-message p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.assistant-message-user {
+  align-self: flex-end;
+  background: var(--primary);
+  color: #fff;
+}
+
+.assistant-message-bot {
+  align-self: flex-start;
+  background: var(--surface-muted);
+  color: var(--ink);
+}
+
+.assistant-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 0.75rem;
 }
 
 .medicine-list-heading {

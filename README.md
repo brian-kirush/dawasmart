@@ -327,6 +327,27 @@ Configure `recommendation-explanation` separately with `LLM_API_KEY`,
 not deploy Supabase migrations or Edge Functions; these remain Supabase CLI
 or dashboard steps.
 
+## Pharmacy Assistant
+
+The signed-in pharmacy assistant is available at `web/assistant.html`. It is
+restricted to the user's active pharmacy and answers from unexpired stock,
+expiry batches, recent sales, forecast results, and reorder recommendations.
+It does not diagnose, prescribe, calculate doses, place orders, or modify
+data. Clinical or patient-specific questions are refused. Replies are written
+to `assistant_logs` for pharmacy- and administrator-readable audit history.
+
+Deploy the Edge Function from the project root:
+
+```sh
+supabase functions deploy pharmacy-assistant
+```
+
+Configure the existing `LLM_API_KEY` and optionally `LLM_API_URL` and
+`LLM_MODEL` secrets before using natural-language wording. If no LLM key is
+configured, the function returns deterministic summaries from the same
+pharmacy-scoped facts. Supabase supplies `SUPABASE_URL` and
+`SUPABASE_SERVICE_ROLE_KEY` to deployed Edge Functions.
+
 ## Privacy and region
 
 The application is intended to avoid patient names and identifiers; no patient
